@@ -1,0 +1,201 @@
+label,count,gloss,category
+0,185,hiện tại,majority
+1,64,trời,balanced
+2,81,đường,balanced
+3,18,ra,minority
+4,42,bắt buộc,balanced
+5,54,nhiều,balanced
+6,32,mưa,balanced
+7,24,lớn,minority
+8,35,gần,balanced
+9,30,có thể,balanced
+10,18,tương lai,minority
+11,59,có,balanced
+12,37,nên,balanced
+13,18,cẩn thận,minority
+14,36,nước,balanced
+15,38,buổi sáng,balanced
+16,37,lạnh,balanced
+17,22,áo,minority
+18,22,mặc,minority
+19,42,nhớ,balanced
+20,58,uống,balanced
+21,171,không,majority
+22,39,buổi tối,balanced
+23,22,nhưng,minority
+24,62,tốt,balanced
+25,18,nhất,minority
+26,57,đừng,balanced
+27,43,đẹp,balanced
+28,14,buổi trưa,minority
+29,18,mệt,minority
+30,21,nóng,minority
+31,27,nhìn,minority
+32,16,khó,minority
+33,41,chơi,balanced
+34,66,xe máy,balanced
+35,32,mang theo,balanced
+36,104,xong,majority
+37,20,chậm,minority
+38,24,quá khứ,minority
+39,16,vẫn,minority
+40,50,nhanh,balanced
+41,14,chuẩn bị,minority
+42,28,giảm,minority
+43,43,thêm,balanced
+44,24,ở đây,minority
+45,18,để,minority
+46,17,thông tin,minority
+47,499,tôi,majority
+48,21,bắt đầu,minority
+49,30,tìm,balanced
+50,22,nghe,minority
+51,49,nhà,balanced
+52,112,muốn,majority
+53,26,đúng,minority
+54,90,cần,balanced
+55,64,chút,balanced
+56,17,dừng,minority
+57,28,đông đúc,minority
+58,21,phía trước,minority
+59,34,chờ,balanced
+60,200,này,majority
+61,32,kiểm tra,balanced
+62,62,đi,balanced
+63,41,hết,balanced
+64,34,khác,balanced
+65,17,khởi động,minority
+66,27,sớm,minority
+67,15,trước khi,minority
+68,20,vì,minority
+69,22,nếu,minority
+70,47,khi,balanced
+71,42,nghỉ ngơi,balanced
+72,22,gặp,minority
+73,47,giấy tờ,balanced
+74,54,người,balanced
+75,56,điện thoại,balanced
+76,22,gọi,minority
+77,67,giúp,balanced
+78,94,ở đâu,balanced
+79,26,vào,minority
+80,19,về,minority
+81,14,bệnh viện,minority
+82,122,có không,majority
+83,30,sẽ,balanced
+84,23,sai,minority
+85,14,xe hơi,minority
+86,32,bao nhiêu,balanced
+87,14,trễ,minority
+88,16,vé,minority
+89,64,mua,balanced
+90,19,nơi,minority
+91,50,đến,balanced
+92,14,luôn,minority
+93,36,giờ,balanced
+94,43,tiền,balanced
+95,15,nhận,minority
+96,20,chọn,minority
+97,15,nhỏ,minority
+98,30,đó,balanced
+99,46,đây,balanced
+100,18,bao lâu,minority
+101,28,khi nào,minority
+102,39,1,balanced
+103,42,thuốc,balanced
+104,29,khám bệnh,minority
+105,29,đau,minority
+106,61,lấy,balanced
+107,36,đổi,balanced
+108,97,ăn,balanced
+109,22,cảm thấy,minority
+110,46,rồi,balanced
+111,33,phòng,balanced
+112,14,bác sĩ,minority
+113,14,kết quả,minority
+114,21,khỏe,minority
+115,21,xin,minority
+116,88,làm,balanced
+117,38,như thế nào,balanced
+118,24,ngủ,minority
+119,36,lại,balanced
+120,22,ai,minority
+121,24,được không,minority
+122,19,thử,minority
+123,20,bảo hiểm,minority
+124,18,thủ tục,minority
+125,44,thời gian,balanced
+126,46,xem,balanced
+127,57,công việc,balanced
+128,22,đặt,minority
+129,16,ra ngoài,minority
+130,23,chưa,minority
+131,34,hình ảnh,balanced
+132,15,cơm,minority
+133,121,gì,majority
+134,32,vui,balanced
+135,17,ngay,minority
+136,18,chúc,minority
+137,22,ngon,minority
+138,83,học,balanced
+139,58,sách,balanced
+140,41,nói,balanced
+141,44,chung,balanced
+142,17,cùng nhau,minority
+143,14,sữa,minority
+144,16,hoa quả,minority
+145,14,trà,minority
+146,32,bánh,balanced
+147,34,nấu,balanced
+148,26,đọc,minority
+149,31,hàng hóa,balanced
+150,61,mới,balanced
+151,18,dọn dẹp,minority
+152,23,phim,minority
+153,22,rau,minority
+154,15,thịt,minority
+155,15,ngồi,minority
+156,20,bài tập,minority
+157,22,mẹ,minority
+158,18,thể thao,minority
+159,14,tiếp tục,minority
+160,35,tất cả,balanced
+161,427,bạn,majority
+162,14,tươi,minority
+163,16,dùng,minority
+164,14,cái nào,minority
+165,41,có thể không,balanced
+166,15,tặng,minority
+167,16,online,minority
+168,14,cũ,minority
+169,44,năm,balanced
+170,56,tết,balanced
+171,22,trẻ em,minority
+172,103,thích,majority
+173,24,hồ sơ,minority
+174,15,nộp,minority
+175,14,xác nhận,minority
+176,22,gửi,minority
+177,22,lớp,minority
+178,32,món ăn,balanced
+179,19,điều,minority
+180,17,cám ơn,minority
+181,14,thật,minority
+182,48,đàn ông,balanced
+183,21,phụ nữ,minority
+184,22,máy tính,minority
+185,14,app,minority
+186,14,đầu bếp,minority
+187,14,tuyệt vời,minority
+188,21,nghĩ,minority
+189,14,không thích,minority
+190,23,tại sao,minority
+191,15,trông,minority
+192,22,chúng ta,minority
+193,56,của tôi,balanced
+194,22,chúng tôi,minority
+195,38,của bạn,balanced
+196,14,hiểu,minority
+197,54,nó,balanced
+198,51,ấy,balanced
+199,14,không thể,minority

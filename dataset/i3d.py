@@ -96,3 +96,8 @@ class InceptionI3D_Data(Dataset):
     
     def __len__(self):
         return len(self.train_labels)
+
+    @property
+    def labels(self):
+        """Return labels for balanced sampling"""
+        return self.train_labels['label'].values
