@@ -121,25 +121,16 @@ def load_video_frames(video_dir, video_name):
         video_name: name of the video (folder name or video file)
 
     Returns:
-        list of frames as numpy arrays
+        list of frames as numpy arrays, fps, frame size
     """
-    video_path = os.path.join(video_dir, video_name)
+    # Try direct .mp4 file first
+    video_path = os.path.join(video_dir, video_name + '.mp4')
 
-    if os.path.isdir(video_path):
-        # Frames stored as images in folder
-        frame_files = sorted([f for f in os.listdir(video_path)
-                              if f.endswith(('.jpg', '.png', '.jpeg'))])
-        frames = []
-        for ff in frame_files:
-            img = cv2.imread(os.path.join(video_path, ff))
-            if img is not None:
-                frames.append(img)
-        return frames
-
-    elif os.path.isfile(video_path + '.mp4') or os.path.isfile(video_path + '.avi'):
-        # Video file
-        ext = '.mp4' if os.path.isfile(video_path + '.mp4') else '.avi'
-        cap = cv2.VideoCapture(video_path + ext)
+    if os.path.isfile(video_path):
+        cap = cv2.VideoCapture(video_path)
+        fps = cap.get(cv2.CAP_PROP_FPS)
+        width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+        height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
         frames = []
         while True:
             ret, frame = cap.read()
@@ -147,20 +138,64 @@ def load_video_frames(video_dir, video_name):
                 break
             frames.append(frame)
         cap.release()
-        return frames
+        return frames, fps, (width, height)
 
-    else:
-        print(f"Warning: Could not find video: {video_name}")
-        return []
+    # Try .avi
+    video_path = os.path.join(video_dir, video_name + '.avi')
+    if os.path.isfile(video_path):
+        cap = cv2.VideoCapture(video_path)
+        fps = cap.get(cv2.CAP_PROP_FPS)
+        width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+        height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        frames = []
+        while True:
+            ret, frame = cap.read()
+            if not ret:
+                break
+            frames.append(frame)
+        cap.release()
+        return frames, fps, (width, height)
+
+    # Try as folder with images
+    folder_path = os.path.join(video_dir, video_name)
+    if os.path.isdir(folder_path):
+        frame_files = sorted([f for f in os.listdir(folder_path)
+                              if f.endswith(('.jpg', '.png', '.jpeg'))])
+        frames = []
+        for ff in frame_files:
+            img = cv2.imread(os.path.join(folder_path, ff))
+            if img is not None:
+                frames.append(img)
+        if frames:
+            h, w = frames[0].shape[:2]
+            return frames, 30.0, (w, h)
+        return [], 30.0, (0, 0)
+
+    print(f"Warning: Could not find video: {video_name}")
+    return [], 30.0, (0, 0)
 
 
-def save_video_frames(frames, output_dir, video_name):
-    """Save frames to directory"""
-    video_path = os.path.join(output_dir, video_name)
-    os.makedirs(video_path, exist_ok=True)
+def save_video_frames(frames, output_dir, video_name, fps=30.0, size=None):
+    """Save frames as mp4 video"""
+    if len(frames) == 0:
+        return False
 
-    for i, frame in enumerate(frames):
-        cv2.imwrite(os.path.join(video_path, f'{i:04d}.jpg'), frame)
+    if size is None:
+        h, w = frames[0].shape[:2]
+        size = (w, h)
+
+    video_path = os.path.join(output_dir, video_name + '.mp4')
+    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+    out = cv2.VideoWriter(video_path, fourcc, fps, size)
+
+    for frame in frames:
+        # Resize if needed
+        if frame.shape[1] != size[0] or frame.shape[0] != size[1]:
+            frame = cv2.resize(frame, size)
+        out.write(frame)
+
+    out.release()
+    return True
 
 
 def augment_minority_classes(
@@ -223,7 +258,7 @@ def augment_minority_classes(
             original_name = sample['name']
 
             # Load video frames
-            frames = load_video_frames(video_dir, original_name)
+            frames, fps, size = load_video_frames(video_dir, original_name)
 
             if len(frames) == 0:
                 continue
@@ -234,8 +269,11 @@ def augment_minority_classes(
             # Generate new name
             new_name = f"{original_name}_aug{i}"
 
-            # Save augmented frames
-            save_video_frames(aug_frames, output_dir, new_name)
+            # Save augmented video
+            success = save_video_frames(aug_frames, output_dir, new_name, fps, size)
+
+            if not success:
+                continue
 
             # Create new sample entry
             new_sample = sample.copy()
