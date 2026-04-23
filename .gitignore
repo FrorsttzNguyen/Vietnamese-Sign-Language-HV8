@@ -1,0 +1,39 @@
+# Data and datasets
+data/
+
+# Model outputs and results
+result/
+result.zip
+result_i3d.zip
+checkpoints/
+
+# Pretrained models
+pretrained_models/
+
+# Experiment tracking and logs
+wandb/
+log/
+out-img/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+.eggs/
+dist/
+build/
+
+# Environment
+.env
+.venv/
+venv/
+ENV/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
