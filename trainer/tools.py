@@ -57,14 +57,19 @@ class EarlyStopping:
         
 class MyCustomLoss(nn.Module):
 
-    def __init__(self, reduction=None,label_smoothing = 0,cls_x = 1,cts_x = 1,cosine_x = 1):
+    def __init__(self, reduction=None,label_smoothing = 0,cls_x = 1,cts_x = 1,cosine_x = 1, class_weights=None):
         """
         Args:
             reduction: defined for compatibility with other losses.
+            class_weights: tensor of shape (num_classes,) for weighted loss
         """
         super(MyCustomLoss, self).__init__()
         print("Use Label Smoothing: ",label_smoothing)
-        self.criterion = nn.CrossEntropyLoss(label_smoothing=label_smoothing)
+        if class_weights is not None:
+            print(f"Use Weighted Loss with {len(class_weights)} class weights")
+            self.criterion = nn.CrossEntropyLoss(weight=class_weights, label_smoothing=label_smoothing)
+        else:
+            self.criterion = nn.CrossEntropyLoss(label_smoothing=label_smoothing)
         self.mse  = nn.MSELoss()
         self.kl_loss = nn.KLDivLoss(reduction="batchmean")
        

@@ -28,16 +28,46 @@ class InceptionI3D_Data(Dataset):
         else:
             print("Use labels from K-Fold")
             self.train_labels = train_labels
-        print(split,len(self.train_labels))
         self.split = split
+        self.base_url = base_url
+        self.data_cfg = dataset_cfg
+        self.data_name = dataset_cfg['dataset_name']
+        if dataset_cfg.get('skip_bad_videos', False):
+            before_filter = len(self.train_labels)
+            self.train_labels = self._filter_bad_videos(self.train_labels)
+            dropped = before_filter - len(self.train_labels)
+            if dropped > 0:
+                print(f"Skipped {dropped} bad video rows for split '{split}'")
+        print(split,len(self.train_labels))
         if split == 'train':
             self.is_train = True
         else:
             self.is_train = False
-        self.base_url = base_url
-        self.data_cfg = dataset_cfg
-        self.data_name = dataset_cfg['dataset_name']
         self.transform = self.build_transform(split)
+
+    def _video_path(self, name):
+        if self.data_cfg['dataset_name'] == "VN_SIGN":
+            path = f'Yolo_dataset/Blur_video/{name}'
+        elif self.data_cfg['dataset_name'] == "AUTSL":
+            path = f'{self.base_url}/{self.split}/{name}'
+        elif self.data_cfg['dataset_name'].startswith("my_data"):
+            path = f'{self.base_url}/my_data'
+        else:
+            path = self.base_url
+        return os.path.join(path, name + ".mp4")
+
+    def _filter_bad_videos(self, labels):
+        min_video_size = self.data_cfg.get('min_video_size_bytes', 1024)
+
+        def is_valid_video(name):
+            video_path = self._video_path(name)
+            return os.path.exists(video_path) and os.path.getsize(video_path) >= min_video_size
+
+        valid_mask = labels['name'].apply(is_valid_video)
+        if not valid_mask.all():
+            bad_names = labels.loc[~valid_mask, 'name'].tolist()
+            print("Bad videos:", bad_names[:20])
+        return labels.loc[valid_mask].reset_index(drop=True)
         
     def build_transform(self,split):
         if split == 'train':
@@ -63,14 +93,7 @@ class InceptionI3D_Data(Dataset):
     def read_videos(self,name):
         index_setting = self.data_cfg['transform_cfg'].get('index_setting', ['segment','pad','segment','pad'])
         clip = []
-        if self.data_cfg['dataset_name'] == "VN_SIGN":
-            path = f'Yolo_dataset/Blur_video/{name}'   
-        elif self.data_cfg['dataset_name'] == "AUTSL":
-            path = f'{self.base_url}/{self.split}/{name}'   
-        elif self.data_cfg['dataset_name'].startswith("my_data"):
-            path = f'{self.base_url}/my_data'
-        
-        vr = VideoReader(os.path.join(path,name+".mp4"),width=1280, height=720)
+        vr = VideoReader(self._video_path(name),width=1280, height=720)
         vlen = len(vr)
         selected_index, pad = get_selected_indexs(vlen,self.data_cfg['num_output_frames'],self.is_train,index_setting,temporal_stride=self.data_cfg['temporal_stride'])
             

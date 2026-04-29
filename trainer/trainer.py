@@ -140,11 +140,15 @@ class Trainer:
                 self.model.load_state_dict(torch.load(f"checkpoints/{cfg['data']['model_name']}/" +cfg['training']['experiment_name'] + "/best_checkpoints" + ".pth"))
             else:
                 self.model.load_state_dict(torch.load(f"checkpoints/{cfg['data']['model_name']}/" +cfg['training']['experiment_name'] + f"/best_checkpoints_fold_{self.k_fold}" + ".pth"))
-            _,_, _,_,  eval_acc = self.evaluate(test_loader, print_stats=True,epoch = 0)
+            _,_, top1_correct, top1_total, eval_acc = self.evaluate(test_loader, print_stats=True,epoch = 0)
+            eval_top_k = cfg['training'].get('eval_top_k', 5)
+            topk_correct, topk_total, topk_acc = self.evaluate_top_k(test_loader, top_k=eval_top_k)
 
-            print("\nTesting accuracy:" , eval_acc)
+            print("\nTesting Top 1 accuracy:" , eval_acc)
+            print(f"Testing Top {eval_top_k} accuracy:" , topk_acc)
             self.test_accuracy = eval_acc
-            self.logging.info("\nTesting accuracy: " + str(eval_acc))
+            self.logging.info(f"\nTesting Top 1 accuracy: {eval_acc} ({top1_correct}/{top1_total})")
+            self.logging.info(f"Testing Top {eval_top_k} accuracy: {topk_acc} ({topk_correct}/{topk_total})")
         if self.k_fold is None:
             self.wandb.run.finish()
             
@@ -303,10 +307,12 @@ class Trainer:
                 pred_all = 1
         # Save results to CSV after loop
         dataset_name = self.cfg.get('data', {}).get('dataset_name', 'unknownz')
-        results.to_csv(f'label_predictions_{dataset_name}.csv', index=False)
+        output_dir = self.cfg.get('training', {}).get('output_dir', '.')
+        os.makedirs(output_dir, exist_ok=True)
+        results.to_csv(os.path.join(output_dir, f'label_predictions_{dataset_name}.csv'), index=False)
         # Existing logic to return loss and accuracy
         loss_log = {key: value / len(dataloader) for key, value in loss_log.items()}
-        self._plot_confusion_matrix(gr_th, pred, f"confusion_matrix_{dataset_name}.png")
+        self._plot_confusion_matrix(gr_th, pred, os.path.join(output_dir, f"confusion_matrix_{dataset_name}.png"))
         return loss_log, running_loss, pred_correct, pred_all, (pred_correct / pred_all)
 
 
@@ -388,8 +394,11 @@ class Trainer:
         plt.savefig(save_path, dpi=100, bbox_inches="tight")
         plt.close()
 
-    def evaluate_top_k(self, dataloader):
+    def evaluate_top_k(self, dataloader, top_k=None):
+        top_k = top_k or self.top_k
         pred_correct, pred_all = 0, 0
+        gr_th = []
+        pred_top1 = []
 
         with torch.no_grad():
             for i, data in enumerate(tqdm(dataloader)):
@@ -404,25 +413,23 @@ class Trainer:
                 logits = outputs['logits']  # Chỉnh sửa ở đây để 'logits' là tensor, không phải list
 
                 # Sử dụng topk để lấy các chỉ số của các dự đoán hàng đầu
-                top_k_predictions = torch.topk(logits, self.top_k).indices.tolist()
+                top_k_predictions = torch.topk(logits, top_k).indices.tolist()
+                top1_pred = logits.argmax(dim=-1)
 
                 # Tính số lượng dự đoán đúng
                 for idx in range(labels.shape[0]):
                     if labels[idx].item() in top_k_predictions[idx]:
                         pred_correct += 1
-                
+	                
                 # Tính tổng số lượng dự đoán
                 pred_all += labels.shape[0]
-
-        # lấy top-1 để vẽ confusion matrix
-        top1_pred = logits.argmax(dim=-1)
-        gr_th = []
-        pred_top1 = []
-        pred_top1.extend(top1_pred.cpu().numpy().tolist())
-        gr_th.extend(labels.cpu().numpy().tolist())
+                pred_top1.extend(top1_pred.cpu().numpy().tolist())
+                gr_th.extend(labels.cpu().numpy().tolist())
 
         dataset_name = self.cfg.get('data', {}).get('dataset_name', 'unknownz')
-        self._plot_confusion_matrix(gr_th, pred_top1, f"confusion_matrix_topk_{dataset_name}.png")
+        output_dir = self.cfg.get('training', {}).get('output_dir', '.')
+        os.makedirs(output_dir, exist_ok=True)
+        self._plot_confusion_matrix(gr_th, pred_top1, os.path.join(output_dir, f"confusion_matrix_top{top_k}_{dataset_name}.png"))
         # Tính và trả về độ chính xác
         return pred_correct, pred_all, (pred_correct / pred_all)
     

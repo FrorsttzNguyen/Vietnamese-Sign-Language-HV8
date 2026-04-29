@@ -4,6 +4,8 @@ from modelling.vtn_att_poseflow_model import VTNHCPF,VTNHCPF_Three_View,VTNHCPF_
 import torch
 from trainer.tools import MyCustomLoss,OLM_Loss
 from modelling.gcn_bert import GCN_BERT
+import pandas as pd
+import numpy as np
 from modelling.i3d import InceptionI3d,InceptionI3D_ThreeView,InceptionI3D_HandCrop,I3D_OneView_Sim_Knowledge_Distillation,I3D_OneView_Sim_Knowledge_Distillation_Inference,InceptionI3D_ThreeView_ShareWeights,I3D_OneView_Sim_Knowledge_Distillation_V2
 from modelling.videomae import pretrain_videomae_small_patch16_224,vit_small_patch16_224
 from torchvision import models
@@ -13,11 +15,75 @@ from collections import OrderedDict
 from modelling.mvit_v2 import mvit_v2_s,MVitV2_ThreeView,MVitV2_HandCrop,MvitV2_OneView_Sim_Knowledge_Distillation,MvitV2_OneView_Sim_Knowledge_Distillation_Inference,MVitV2_ThreeView_ShareWeights,MVitV2_ThreeView_ShareWeights_Visual_Prompt_Tuning,MvitV2_OneView_KD_Knowledge_Distillation_Visual_Prompt_Tuning
 
 
-def load_criterion(train_cfg):
+def compute_class_weights(data_cfg, train_cfg, method='inverse'):
+    """
+    Compute class weights for weighted loss function
+
+    Args:
+        data_cfg: data configuration dict
+        train_cfg: training configuration dict
+        method: 'inverse', 'sqrt_inverse', or 'effective'
+
+    Returns:
+        torch.Tensor of class weights
+    """
+    data_type = data_cfg.get('data_type', '200')
+    label_folder = data_cfg.get('label_folder', f'my_data_{data_type}')
+    base_url = data_cfg.get('base_url', 'data')
+
+    train_csv_path = f"{base_url}/{label_folder}/train_{data_type}.csv"
+
+    try:
+        train_df = pd.read_csv(train_csv_path)
+        labels = train_df['label'].values
+
+        n_classes = train_cfg.get('num_classes', data_cfg.get('num_classes', 200))
+        n_samples = len(labels)
+
+        class_counts = np.zeros(n_classes)
+        for label in labels:
+            if 0 <= label < n_classes:
+                class_counts[label] += 1
+
+        class_counts = np.maximum(class_counts, 1)
+
+        if method == 'inverse':
+            weights = n_samples / (n_classes * class_counts)
+        elif method == 'sqrt_inverse':
+            weights = np.sqrt(n_samples / (n_classes * class_counts))
+        elif method == 'effective':
+            beta = 0.9999
+            effective_num = 1.0 - np.power(beta, class_counts)
+            weights = (1.0 - beta) / effective_num
+        else:
+            weights = np.ones(n_classes)
+
+        weights = weights / weights.sum() * n_classes
+
+        print(f"Class weights computed using '{method}' method")
+        print(f"  Min weight: {weights.min():.4f}, Max weight: {weights.max():.4f}")
+
+        return torch.tensor(weights, dtype=torch.float32)
+
+    except Exception as e:
+        print(f"Warning: Could not compute class weights: {e}")
+        return None
+
+
+def load_criterion(train_cfg, data_cfg=None):
     criterion = None
+    class_weights = None
+
+    if train_cfg.get('use_weighted_loss', False) and data_cfg is not None:
+        weight_method = train_cfg.get('weight_method', 'inverse')
+        class_weights = compute_class_weights(data_cfg, train_cfg, method=weight_method)
+        if class_weights is not None:
+            device = train_cfg.get('device', 'cuda:0')
+            class_weights = class_weights.to(device)
+
     if train_cfg['criterion'] == "MyCustomLoss":
-        criterion = MyCustomLoss(label_smoothing=train_cfg['label_smoothing'])
-    if train_cfg['criterion'] == "OLM_Loss": 
+        criterion = MyCustomLoss(label_smoothing=train_cfg['label_smoothing'], class_weights=class_weights)
+    if train_cfg['criterion'] == "OLM_Loss":
         criterion = OLM_Loss(label_smoothing=train_cfg['label_smoothing'])
     assert criterion is not None
     return criterion

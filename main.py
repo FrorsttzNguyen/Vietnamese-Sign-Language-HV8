@@ -34,7 +34,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser("SLT baseline")
     parser.add_argument(
         "--config",
-        default="configs\i3d\label_1_1000\i3d_one_view_from_AUTSL.yaml",
+        default="configs/i3d/label_1_1000/i3d_one_view_from_AUTSL.yaml",
         type=str,
         help="Training configuration file (yaml).",
     )
@@ -64,13 +64,14 @@ if __name__ == "__main__":
 
 
     seed_everything(cfg['training']['random_seed'])
-    log_directory = f"log/{cfg['data']['model_name']}"
+    log_directory = f"log/{cfg['data']['model_name']}/{cfg['training']['experiment_name']}"
     os.makedirs(log_directory, exist_ok=True)
+    cfg['training']['output_dir'] = log_directory
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s [%(levelname)s] %(message)s",
         handlers=[
-            logging.FileHandler(f"log/{cfg['data']['model_name']}/{cfg['training']['experiment_name']}" + ".log")
+            logging.FileHandler(f"{log_directory}/run.log")
         ]
     )
     # Set device to CUDA only if applicable
@@ -119,7 +120,7 @@ if __name__ == "__main__":
             model = load_model(cfg)
             model.to(device)
             
-            criterion = load_criterion(cfg['training'])
+            criterion = load_criterion(cfg['training'], cfg['data'])
             optimizer = load_optimizer(cfg['training'],model)
             lr_scheduler = load_lr_scheduler(cfg['training'],optimizer)
 
@@ -166,7 +167,7 @@ if __name__ == "__main__":
         model = load_model(cfg)
         model.to(device)
         
-        criterion = load_criterion(cfg['training'])
+        criterion = load_criterion(cfg['training'], cfg['data'])
         optimizer = load_optimizer(cfg['training'],model)
         lr_scheduler = load_lr_scheduler(cfg['training'],optimizer)
 
@@ -196,6 +197,7 @@ if __name__ == "__main__":
                 trainer.train(train_loader,None,None) # self-pretrained video mae
         else:
             scores = []
+            eval_top_k = cfg['training'].get('eval_top_k', 5)
             scores_top_k=[]
             scores_class = []
             scores_top_k_class=[]
@@ -209,10 +211,10 @@ if __name__ == "__main__":
                 print(acc)
                 logging.info(f"Idx:{i+1} - Total: {pred_all} - Correct: {pred_correct} -Top 1 Accuracy per Instance: {acc} " )
 
-                pred_correct, pred_all, acc= trainer.evaluate_top_k(test_loader)
+                pred_correct, pred_all, acc= trainer.evaluate_top_k(test_loader, top_k=eval_top_k)
                 scores_top_k.append(acc)
                 print(acc)
-                logging.info(f"Idx:{i+1} - Total: {pred_all} - Correct: {pred_correct} -Top 5 Accuracy per Instance: {acc} " )
+                logging.info(f"Idx:{i+1} - Total: {pred_all} - Correct: {pred_correct} -Top {eval_top_k} Accuracy per Instance: {acc} " )
 
                 # average_accuracy = trainer.evaluate_per_class(test_loader)
                 # scores_class.append(average_accuracy)
@@ -234,7 +236,7 @@ if __name__ == "__main__":
             scores_top_k = torch.tensor(scores_top_k)
             meank = scores_top_k.mean()
             stdk = scores_top_k.std()
-            logging.info(f"Mean Top 5: {meank} - Std Top 5: {stdk}" )
+            logging.info(f"Mean Top {eval_top_k}: {meank} - Std Top {eval_top_k}: {stdk}" )
 
             #PER CLASS    
             # logging.info(f"--------------------------------Per Class Statistic--------------------------------" )    

@@ -18,6 +18,8 @@ data:
     NORM_STD_IMGNET: [0.229, 0.224, 0.225]
   SHOULDER_DIST_EPSILON: 1.2
   WRIST_DELTA: 0.15
+  skip_bad_videos: true
+  min_video_size_bytes: 1024
   label_folder: my_data_100
   data_type: 100
 training:
@@ -29,7 +31,8 @@ training:
   device: cuda:0
   overwrite: true
   log_freq: 1
-  experiment_name: "I3D finetune pretrained from AUTSL for one view with Blur video"
+  # experiment_name: "I3D finetune pretrained from AUTSL for one view with Blur video"
+  experiment_name: "I3D_100_eval_top1_top5"
   model_dir: results/i3d/mydata
   random_seed: 42
   shuffle: True
@@ -47,14 +50,15 @@ training:
   criterion: MyCustomLoss
   optimzer: Adam
   lr_scheduler: StepLR
-  top_k: 5
+  top_k: 1
+  eval_top_k: 5
   print_stats: true
-  pretrained: false
-  pretrained_model: checkpoints/InceptionI3d/I3D for AUTSL pretrained on charades for one view/autsl_best_checkpoints.pth
+  pretrained: true
+  pretrained_model: result/top_100_1/checkpoints/InceptionI3d/I3D finetune pretrained from AUTSL for one view with Blur video/best_checkpoints.pth
   lr_step_size: 10
   gamma: 0.8
   num_accumulation_steps: 4
-  patience: 15
+  patience: 5
   verbose: true
   delta: 0
   is_early_stopping: true
